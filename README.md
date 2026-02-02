@@ -95,7 +95,8 @@ This project is intentionally built as a **single self-contained file** for port
 
 ## 📝 License
 
-Free to use and modify for educational and professional purposes.
+Free to use, copy, and modify for **educational and academic purposes**.
+For **professional, commercial, or business use**, please contact the author for permission.
 
 ---
 
