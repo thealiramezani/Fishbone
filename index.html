@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Fishbone Diagram Generator</title>
     <style>
+        #diagram-container {
+            width: 100%;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -529,6 +533,9 @@
         let causeCounter = 0;
         let selectedPalette = 'earthy';
         let selectedSize = 'small';
+        let lastDiagramProblem = null;
+        let lastDiagramCauses = null;
+
 
         const imageSizes = {
             small: { width: 1000, height: 600 },
@@ -811,8 +818,8 @@
         function generateSVGString(problem, causes, width, height) {
             const centerY = height / 2;
             const spineStartX = width * 0.1;
-            const spineEndX = width * 0.85;
             const headRadius = height * 0.1;
+            const spineEndX = width - (2 * headRadius + width * 0.06);
             
             const palette = colorPalettes[selectedPalette];
             
@@ -970,56 +977,72 @@
                 return;
             }
 
+            // Remember last generated content so we can re-fit on resize
+            lastDiagramProblem = problem;
+            lastDiagramCauses = causes;
+
             drawFishbone(problem, causes);
         }
 
+
         function drawFishbone(problem, causes) {
+            // Base design size (drawing coordinates)
             const width = 1000;
             const height = 600;
+
             const centerY = height / 2;
             const spineStartX = 100;
-            const spineEndX = width - 150;
             const headRadius = 60;
-            
+
+            // --- FIX: ensure the fish head ALWAYS fits inside the SVG width ---
+            // Ellipse rightmost edge = spineEndX + 160 (based on your geometry)
+            // So we cap spineEndX to width - 160
+            const spineEndX = width - 160;
+
             const palette = colorPalettes[selectedPalette];
-            
-            let svg = `<svg id="fishbone-svg" width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
-            
+
+            // --- FIX: Responsive SVG via viewBox + preserveAspectRatio ---
+            let svg = `<svg id="fishbone-svg"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 ${width} ${height}"
+                            preserveAspectRatio="xMidYMid meet"
+                            style="width:100%; height:auto; display:block;">`;
+
             // Background
             svg += `<rect width="${width}" height="${height}" fill="#fafbfc"/>`;
-            
+
             // Draw spine (main horizontal line)
             svg += `<line x1="${spineStartX}" y1="${centerY}" x2="${spineEndX}" y2="${centerY}" stroke="${palette.spine}" stroke-width="3"/>`;
-            
+
             // Draw arrow head
             svg += `<polygon points="${spineEndX},${centerY} ${spineEndX-15},${centerY-8} ${spineEndX-15},${centerY+8}" fill="${palette.spine}"/>`;
-            
+
             // Draw problem box (fish head)
             const headX = spineEndX + 20;
             svg += `<ellipse cx="${headX + headRadius}" cy="${centerY}" rx="${headRadius + 20}" ry="${headRadius}" fill="${palette.head}" opacity="0.8"/>`;
             svg += `<circle cx="${headX + headRadius + 30}" cy="${centerY - 15}" r="12" fill="white"/>`;
-            
+
             // Problem text
             const problemLines = wrapText(problem, 18);
             problemLines.forEach((line, i) => {
                 svg += `<text x="${headX + headRadius}" y="${centerY + (i - problemLines.length/2 + 0.5) * 16}" text-anchor="middle" font-size="14" font-weight="bold" fill="white">${escapeHtml(line)}</text>`;
             });
-            
+
             // Calculate positions for causes
             const totalCauses = causes.length;
             const topCauses = Math.ceil(totalCauses / 2);
             const bottomCauses = Math.floor(totalCauses / 2);
-            
+
             const spineLength = spineEndX - spineStartX;
             const segmentLength = spineLength / Math.max(topCauses, bottomCauses);
-            
+
             let topIndex = 0;
             let bottomIndex = 0;
-            
+
             causes.forEach((cause, index) => {
                 const isTop = index % 2 === 0;
                 let xPos;
-                
+
                 if (isTop) {
                     xPos = spineStartX + (topIndex + 0.5) * segmentLength;
                     topIndex++;
@@ -1027,72 +1050,58 @@
                     xPos = spineStartX + (bottomIndex + 0.5) * segmentLength;
                     bottomIndex++;
                 }
-                
+
                 const yPos = isTop ? centerY - 120 : centerY + 120;
-                const boneAngle = isTop ? -45 : 45;
-                
                 const color = palette.colors[index % palette.colors.length];
-                
-                // Calculate bone end point
-                const boneEndX = xPos + (isTop ? -60 : -60);
+
+                // Main bone end point
+                const boneEndX = xPos - 60;
                 const boneEndY = yPos;
-                
+
                 // Draw main bone
                 svg += `<line x1="${xPos}" y1="${centerY}" x2="${boneEndX}" y2="${boneEndY}" stroke="${color}" stroke-width="3"/>`;
-                
+
                 // Draw cause circle
                 svg += `<circle cx="${boneEndX}" cy="${boneEndY}" r="25" fill="${color}" opacity="0.3" stroke="${color}" stroke-width="2"/>`;
                 svg += `<circle cx="${boneEndX}" cy="${boneEndY}" r="8" fill="${color}"/>`;
-                
+
                 // Cause label
                 const causeLines = wrapText(cause.name, 12);
                 causeLines.forEach((line, i) => {
                     svg += `<text x="${boneEndX}" y="${boneEndY + (isTop ? -35 : 45) + i * 14}" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">${escapeHtml(line)}</text>`;
                 });
-                
-                // Draw sub-items along the bone
+
+                // Sub-items
                 const numSubItems = cause.items.length;
                 if (numSubItems > 0) {
-                    // Calculate positions along the main bone
                     for (let subIndex = 0; subIndex < numSubItems; subIndex++) {
                         const item = cause.items[subIndex];
-                        
-                        // Position along the bone (from spine to end)
+
                         const t = (subIndex + 1) / (numSubItems + 1);
                         const subX = xPos + (boneEndX - xPos) * t;
                         const subY = centerY + (boneEndY - centerY) * t;
-                        
-                        // Calculate perpendicular offset for sub-bone
+
                         const boneAngleRad = Math.atan2(boneEndY - centerY, boneEndX - xPos);
-                        // For bottom bones, flip the perpendicular direction
                         const perpAngle = boneAngleRad + (isTop ? Math.PI / 2 : -Math.PI / 2);
                         const subBoneLength = 40;
-                        
-                        // Sub-bone extends perpendicular to main bone
+
                         const subBoneEndX = subX + Math.cos(perpAngle) * subBoneLength;
                         const subBoneEndY = subY + Math.sin(perpAngle) * subBoneLength;
-                        
-                        // Draw sub-bone
+
                         svg += `<line x1="${subX}" y1="${subY}" x2="${subBoneEndX}" y2="${subBoneEndY}" stroke="${color}" stroke-width="1.5" opacity="0.6"/>`;
-                        
-                        // Sub-item circle
                         svg += `<circle cx="${subBoneEndX}" cy="${subBoneEndY}" r="5" fill="${color}" opacity="0.8"/>`;
-                        
-                        // Sub-item text - position based on which side
+
                         const textOffset = 10;
-                        const textX = subBoneEndX + textOffset;
-                        const textY = subBoneEndY;
-                        const textAnchor = "start";
-                        
-                        svg += `<text x="${textX}" y="${textY + 4}" font-size="11" fill="#555" text-anchor="${textAnchor}">${escapeHtml(item)}</text>`;
+                        svg += `<text x="${subBoneEndX + textOffset}" y="${subBoneEndY + 4}" font-size="11" fill="#555" text-anchor="start">${escapeHtml(item)}</text>`;
                     }
                 }
             });
-            
-            svg += '</svg>';
-            
-            document.getElementById('diagram-container').innerHTML = svg;
-        }
+
+    svg += `</svg>`;
+
+    document.getElementById('diagram-container').innerHTML = svg;
+}
+
 
         function wrapText(text, maxLength) {
             const words = text.split(' ');
@@ -1117,6 +1126,13 @@
             div.textContent = text;
             return div.innerHTML;
         }
+
+        window.addEventListener('resize', () => {
+            if (lastDiagramProblem && lastDiagramCauses) {
+                drawFishbone(lastDiagramProblem, lastDiagramCauses);
+            }
+        });
+
     </script>
 </body>
 </html>
