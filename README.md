@@ -25,7 +25,7 @@ Built as a single-file HTML app — easy to use, easy to deploy with GitHub Page
 
 After enabling GitHub Pages for this repo, your site will be available at:
 
-https://YOUR-USERNAME.github.io/REPO-NAME/
+https://thealiramezani.github.io/Fishbone/
 
 ---
 
