@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Fishbone Diagram Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 0;
+        }
+
+        .input-panel {
+            background: #f8f9fa;
+            padding: 30px;
+            border-right: 2px solid #e0e0e0;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        .diagram-panel {
+            padding: 30px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .causes-section {
+            margin-bottom: 25px;
+        }
+
+        .cause-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .cause-item:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .cause-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .cause-header input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        .remove-cause-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+
+        .remove-cause-btn:hover {
+            background: #ee5a6f;
+        }
+
+        .sub-items {
+            margin-top: 10px;
+        }
+
+        .sub-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .sub-item input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 13px;
+            margin-right: 8px;
+        }
+
+        .remove-sub-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .add-sub-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            width: 100%;
+            margin-top: 5px;
+            transition: background 0.3s;
+        }
+
+        .add-sub-btn:hover {
+            background: #764ba2;
+        }
+
+        .add-cause-btn {
+            background: #26de81;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            width: 100%;
+            margin-bottom: 20px;
+            transition: background 0.3s;
+        }
+
+        .add-cause-btn:hover {
+            background: #20bf6b;
+        }
+
+        .color-palette-section {
+            margin-bottom: 25px;
+        }
+
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .palette-option {
+            border: 3px solid transparent;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .palette-option:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .palette-option.selected {
+            border-color: #667eea;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .palette-colors {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+
+        .palette-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            flex: 1;
+        }
+
+        .palette-name {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        #fishbone-svg {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 150px;
+            height: 150px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .export-section {
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .export-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #26de81 0%, #20bf6b 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(38, 222, 129, 0.4);
+        }
+
+        .export-btn.secondary {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        }
+
+        .export-btn.secondary:hover {
+            box-shadow: 0 5px 20px rgba(243, 156, 18, 0.4);
+        }
+
+        .size-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .size-option {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .size-option:hover {
+            border-color: #26de81;
+            background: #f0f9f4;
+        }
+
+        .size-option.selected {
+            border-color: #26de81;
+            background: #26de81;
+            color: white;
+            font-weight: 600;
+        }
+
+        .size-label {
+            font-weight: 600;
+            display: block;
+        }
+
+        .size-dimensions {
+            font-size: 10px;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        .size-option.selected .size-dimensions {
+            color: white;
+        }
+
+        .import-section {
+            margin-top: 15px;
+        }
+
+        .import-btn {
+            background: white;
+            border: 2px dashed #667eea;
+            color: #667eea;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .import-btn:hover {
+            background: #f0f2ff;
+            border-color: #764ba2;
+            color: #764ba2;
+        }
+
+        .hidden-file-input {
+            display: none;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐟 Fishbone Diagram Generator</h1>
+            <p>Ishikawa Cause and Effect Analysis Tool</p>
+        </div>
+        
+        <div class="content">
+            <div class="input-panel">
+                <div class="form-group">
+                    <label for="problem-input">Problem / Effect:</label>
+                    <input type="text" id="problem-input" placeholder="Enter the main problem or effect...">
+                </div>
+
+                <div class="color-palette-section">
+                    <div class="section-title">Color Palette</div>
+                    <div class="palette-grid" id="palette-grid">
+                        <!-- Palettes will be added by JavaScript -->
+                    </div>
+                </div>
+
+                <div class="section-title">Causes</div>
+                
+                <button class="add-cause-btn" onclick="addCause()">+ Add New Cause Category</button>
+                
+                <div class="causes-section" id="causes-container">
+                    <!-- Causes will be added dynamically -->
+                </div>
+
+                <button class="generate-btn" onclick="generateDiagram()">🎨 Generate Fishbone Diagram</button>
+
+                <div class="export-section">
+                    <div class="section-title">Export Options</div>
+                    
+                    <label style="font-size: 12px; font-weight: 600; color: #333; display: block; margin-bottom: 8px;">Image Size:</label>
+                    <div class="size-selector">
+                        <div class="size-option selected" data-size="small" onclick="selectSize('small')">
+                            <span class="size-label">Small</span>
+                            <span class="size-dimensions">1000×600</span>
+                        </div>
+                        <div class="size-option" data-size="medium" onclick="selectSize('medium')">
+                            <span class="size-label">Medium</span>
+                            <span class="size-dimensions">1600×900</span>
+                        </div>
+                        <div class="size-option" data-size="large" onclick="selectSize('large')">
+                            <span class="size-label">Large</span>
+                            <span class="size-dimensions">2400×1350</span>
+                        </div>
+                        <div class="size-option" data-size="xlarge" onclick="selectSize('xlarge')">
+                            <span class="size-label">X-Large</span>
+                            <span class="size-dimensions">3200×1800</span>
+                        </div>
+                        <div class="size-option" data-size="poster" onclick="selectSize('poster')">
+                            <span class="size-label">Poster</span>
+                            <span class="size-dimensions">4000×2250</span>
+                        </div>
+                        <div class="size-option" data-size="custom" onclick="selectSize('custom')">
+                            <span class="size-label">Current</span>
+                            <span class="size-dimensions">As shown</span>
+                        </div>
+                    </div>
+
+                    <div class="export-buttons">
+                        <button class="export-btn" onclick="exportAsPNG()">💾 Save as PNG</button>
+                        <button class="export-btn" onclick="exportAsSVG()">📊 Save as SVG</button>
+                    </div>
+
+                    <button class="export-btn secondary" onclick="exportData()" style="width: 100%;">📄 Export Data (JSON)</button>
+
+                    <div class="import-section">
+                        <input type="file" id="import-file" class="hidden-file-input" accept=".json" onchange="importData(event)">
+                        <button class="import-btn" onclick="document.getElementById('import-file').click()">📥 Import Data (JSON)</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-panel">
+                <div id="diagram-container">
+                    <div class="empty-state">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20,100 L180,100 M180,100 L160,85 M180,100 L160,115" 
+                                  stroke="#667eea" stroke-width="3" fill="none"/>
+                            <circle cx="180" cy="100" r="15" fill="#667eea" opacity="0.3"/>
+                            <path d="M60,60 L90,100 M140,60 L110,100" 
+                                  stroke="#667eea" stroke-width="2" fill="none" opacity="0.5"/>
+                            <path d="M60,140 L90,100 M140,140 L110,100" 
+                                  stroke="#667eea" stroke-width="2" fill="none" opacity="0.5"/>
+                        </svg>
+                        <h3>Your diagram will appear here</h3>
+                        <p>Add causes and click "Generate Fishbone Diagram"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            Developed by <a href="#">Ali Ramezani</a> for MIT Catalyst 2026
+        </div>
+    </div>
+
+    <script>
+        let causeCounter = 0;
+        let selectedPalette = 'earthy';
+        let selectedSize = 'small';
+
+        const imageSizes = {
+            small: { width: 1000, height: 600 },
+            medium: { width: 1600, height: 900 },
+            large: { width: 2400, height: 1350 },
+            xlarge: { width: 3200, height: 1800 },
+            poster: { width: 4000, height: 2250 },
+            custom: { width: 1000, height: 600 } // Will use current display size
+        };
+
+        const colorPalettes = {
+            earthy: {
+                name: 'Earthy',
+                colors: ['#a8564b', '#8b7355', '#7d5a50', '#6b5b52'],
+                spine: '#2c3e50',
+                head: '#8b4513'
+            },
+            ocean: {
+                name: 'Ocean',
+                colors: ['#3498db', '#2980b9', '#1abc9c', '#16a085'],
+                spine: '#34495e',
+                head: '#2c3e50'
+            },
+            forest: {
+                name: 'Forest',
+                colors: ['#27ae60', '#229954', '#1e8449', '#196f3d'],
+                spine: '#145a32',
+                head: '#0e6655'
+            },
+            sunset: {
+                name: 'Sunset',
+                colors: ['#e74c3c', '#ec7063', '#f39c12', '#e67e22'],
+                spine: '#922b21',
+                head: '#cb4335'
+            },
+            purple: {
+                name: 'Purple Dream',
+                colors: ['#8e44ad', '#9b59b6', '#7d3c98', '#6c3483'],
+                spine: '#512e5f',
+                head: '#5b2c6f'
+            },
+            corporate: {
+                name: 'Corporate',
+                colors: ['#34495e', '#5d6d7e', '#85929e', '#566573'],
+                spine: '#1c2833',
+                head: '#273746'
+            },
+            vibrant: {
+                name: 'Vibrant',
+                colors: ['#e91e63', '#9c27b0', '#673ab7', '#3f51b5'],
+                spine: '#1a237e',
+                head: '#4a148c'
+            },
+            autumn: {
+                name: 'Autumn',
+                colors: ['#d35400', '#ba4a00', '#a04000', '#873600'],
+                spine: '#6e2c00',
+                head: '#7e3517'
+            }
+        };
+
+        // Initialize with some default causes
+        window.onload = function() {
+            initializePalettes();
+            addCause('Quality Product');
+            addCause('Management');
+            addCause('Marketing');
+            addCause('High Price');
+        };
+
+        function initializePalettes() {
+            const paletteGrid = document.getElementById('palette-grid');
+            
+            Object.keys(colorPalettes).forEach(paletteKey => {
+                const palette = colorPalettes[paletteKey];
+                const paletteDiv = document.createElement('div');
+                paletteDiv.className = 'palette-option' + (paletteKey === selectedPalette ? ' selected' : '');
+                paletteDiv.onclick = () => selectPalette(paletteKey);
+                
+                const colorsDiv = document.createElement('div');
+                colorsDiv.className = 'palette-colors';
+                palette.colors.forEach(color => {
+                    const colorDiv = document.createElement('div');
+                    colorDiv.className = 'palette-color';
+                    colorDiv.style.backgroundColor = color;
+                    colorsDiv.appendChild(colorDiv);
+                });
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'palette-name';
+                nameDiv.textContent = palette.name;
+                
+                paletteDiv.appendChild(colorsDiv);
+                paletteDiv.appendChild(nameDiv);
+                paletteGrid.appendChild(paletteDiv);
+            });
+        }
+
+        function selectPalette(paletteKey) {
+            selectedPalette = paletteKey;
+            document.querySelectorAll('.palette-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.target.closest('.palette-option').classList.add('selected');
+        }
+
+        function selectSize(size) {
+            selectedSize = size;
+            document.querySelectorAll('.size-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.target.closest('.size-option').classList.add('selected');
+        }
+
+        function exportAsPNG() {
+            const svgElement = document.getElementById('fishbone-svg');
+            if (!svgElement) {
+                alert('Please generate a fishbone diagram first!');
+                return;
+            }
+
+            const size = imageSizes[selectedSize];
+            const canvas = document.createElement('canvas');
+            canvas.width = size.width;
+            canvas.height = size.height;
+            const ctx = canvas.getContext('2d');
+
+            // Get the current SVG and redraw it at the selected size
+            const problem = document.getElementById('problem-input').value || 'Problem';
+            const causes = collectCauses();
+            const svgString = generateSVGString(problem, causes, size.width, size.height);
+
+            const img = new Image();
+            const blob = new Blob([svgString], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+
+            img.onload = function() {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+                
+                canvas.toBlob(function(blob) {
+                    const link = document.createElement('a');
+                    link.download = 'fishbone-diagram.png';
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+                    URL.revokeObjectURL(url);
+                });
+            };
+
+            img.src = url;
+        }
+
+        function exportAsSVG() {
+            const svgElement = document.getElementById('fishbone-svg');
+            if (!svgElement) {
+                alert('Please generate a fishbone diagram first!');
+                return;
+            }
+
+            const problem = document.getElementById('problem-input').value || 'Problem';
+            const causes = collectCauses();
+            const size = imageSizes[selectedSize];
+            const svgString = generateSVGString(problem, causes, size.width, size.height);
+
+            const blob = new Blob([svgString], { type: 'image/svg+xml' });
+            const link = document.createElement('a');
+            link.download = 'fishbone-diagram.svg';
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        function collectCauses() {
+            const causes = [];
+            const causeItems = document.querySelectorAll('.cause-item');
+            causeItems.forEach(item => {
+                const causeName = item.querySelector('.cause-name').value || 'Cause';
+                const subItems = [];
+                item.querySelectorAll('.sub-item-input').forEach(input => {
+                    if (input.value.trim()) {
+                        subItems.push(input.value.trim());
+                    }
+                });
+                causes.push({ name: causeName, items: subItems });
+            });
+            return causes;
+        }
+
+        function exportData() {
+            const data = {
+                problem: document.getElementById('problem-input').value,
+                palette: selectedPalette,
+                causes: collectCauses(),
+                version: '1.0',
+                exportDate: new Date().toISOString()
+            };
+
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.download = 'fishbone-data.json';
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    // Set problem
+                    document.getElementById('problem-input').value = data.problem || '';
+                    
+                    // Set palette
+                    if (data.palette && colorPalettes[data.palette]) {
+                        selectedPalette = data.palette;
+                        document.querySelectorAll('.palette-option').forEach(option => {
+                            option.classList.remove('selected');
+                        });
+                        document.querySelector(`[onclick="selectPalette('${data.palette}')"]`)?.closest('.palette-option')?.classList.add('selected');
+                    }
+                    
+                    // Clear existing causes
+                    document.getElementById('causes-container').innerHTML = '';
+                    causeCounter = 0;
+                    
+                    // Add imported causes
+                    if (data.causes && Array.isArray(data.causes)) {
+                        data.causes.forEach(cause => {
+                            causeCounter++;
+                            const container = document.getElementById('causes-container');
+                            
+                            const causeDiv = document.createElement('div');
+                            causeDiv.className = 'cause-item';
+                            causeDiv.id = `cause-${causeCounter}`;
+                            
+                            let subItemsHtml = '';
+                            cause.items.forEach(item => {
+                                subItemsHtml += `
+                                    <div class="sub-item">
+                                        <input type="text" value="${escapeHtml(item)}" class="sub-item-input">
+                                        <button class="remove-sub-btn" onclick="this.parentElement.remove()">✕</button>
+                                    </div>
+                                `;
+                            });
+                            
+                            causeDiv.innerHTML = `
+                                <div class="cause-header">
+                                    <input type="text" value="${escapeHtml(cause.name)}" class="cause-name">
+                                    <button class="remove-cause-btn" onclick="removeCause('cause-${causeCounter}')">✕</button>
+                                </div>
+                                <div class="sub-items" id="sub-items-${causeCounter}">
+                                    ${subItemsHtml}
+                                </div>
+                                <button class="add-sub-btn" onclick="addSubItem('sub-items-${causeCounter}')">+ Add Sub-item</button>
+                            `;
+                            
+                            container.appendChild(causeDiv);
+                        });
+                    }
+                    
+                    alert('Data imported successfully!');
+                    
+                } catch (error) {
+                    alert('Error importing data: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            
+            // Reset file input
+            event.target.value = '';
+        }
+
+        function generateSVGString(problem, causes, width, height) {
+            const centerY = height / 2;
+            const spineStartX = width * 0.1;
+            const spineEndX = width * 0.85;
+            const headRadius = height * 0.1;
+            
+            const palette = colorPalettes[selectedPalette];
+            
+            let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
+            
+            // Background
+            svg += `<rect width="${width}" height="${height}" fill="#fafbfc"/>`;
+            
+            // Draw spine (main horizontal line)
+            svg += `<line x1="${spineStartX}" y1="${centerY}" x2="${spineEndX}" y2="${centerY}" stroke="${palette.spine}" stroke-width="${width/333}"/>`;
+            
+            // Draw arrow head
+            const arrowSize = width / 67;
+            svg += `<polygon points="${spineEndX},${centerY} ${spineEndX-arrowSize},${centerY-arrowSize*0.5} ${spineEndX-arrowSize},${centerY+arrowSize*0.5}" fill="${palette.spine}"/>`;
+            
+            // Draw problem box (fish head)
+            const headX = spineEndX + width * 0.02;
+            svg += `<ellipse cx="${headX + headRadius}" cy="${centerY}" rx="${headRadius + width*0.02}" ry="${headRadius}" fill="${palette.head}" opacity="0.8"/>`;
+            svg += `<circle cx="${headX + headRadius + width*0.03}" cy="${centerY - headRadius*0.25}" r="${headRadius*0.2}" fill="white"/>`;
+            
+            // Problem text
+            const fontSize = Math.max(12, width / 71);
+            const problemLines = wrapText(problem, Math.floor(width / 55));
+            problemLines.forEach((line, i) => {
+                svg += `<text x="${headX + headRadius}" y="${centerY + (i - problemLines.length/2 + 0.5) * fontSize * 1.2}" text-anchor="middle" font-size="${fontSize}" font-weight="bold" fill="white">${escapeHtml(line)}</text>`;
+            });
+            
+            // Calculate positions for causes
+            const totalCauses = causes.length;
+            const topCauses = Math.ceil(totalCauses / 2);
+            const bottomCauses = Math.floor(totalCauses / 2);
+            
+            const spineLength = spineEndX - spineStartX;
+            const segmentLength = spineLength / Math.max(topCauses, bottomCauses);
+            
+            let topIndex = 0;
+            let bottomIndex = 0;
+            
+            causes.forEach((cause, index) => {
+                const isTop = index % 2 === 0;
+                let xPos;
+                
+                if (isTop) {
+                    xPos = spineStartX + (topIndex + 0.5) * segmentLength;
+                    topIndex++;
+                } else {
+                    xPos = spineStartX + (bottomIndex + 0.5) * segmentLength;
+                    bottomIndex++;
+                }
+                
+                const yPos = isTop ? centerY - height * 0.2 : centerY + height * 0.2;
+                const color = palette.colors[index % palette.colors.length];
+                
+                // Calculate bone end point
+                const boneEndX = xPos + (isTop ? -width * 0.06 : -width * 0.06);
+                const boneEndY = yPos;
+                
+                // Draw main bone
+                svg += `<line x1="${xPos}" y1="${centerY}" x2="${boneEndX}" y2="${boneEndY}" stroke="${color}" stroke-width="${width/333}"/>`;
+                
+                // Draw cause circle
+                const circleRadius = width * 0.025;
+                svg += `<circle cx="${boneEndX}" cy="${boneEndY}" r="${circleRadius}" fill="${color}" opacity="0.3" stroke="${color}" stroke-width="${width/500}"/>`;
+                svg += `<circle cx="${boneEndX}" cy="${boneEndY}" r="${circleRadius * 0.32}" fill="${color}"/>`;
+                
+                // Cause label
+                const causeFontSize = Math.max(11, width / 77);
+                const causeLines = wrapText(cause.name, Math.floor(width / 83));
+                causeLines.forEach((line, i) => {
+                    svg += `<text x="${boneEndX}" y="${boneEndY + (isTop ? -circleRadius - 10 : circleRadius + 20) + i * causeFontSize * 1.2}" text-anchor="middle" font-size="${causeFontSize}" font-weight="bold" fill="#333">${escapeHtml(line)}</text>`;
+                });
+                
+                // Draw sub-items along the bone
+                const numSubItems = cause.items.length;
+                if (numSubItems > 0) {
+                    for (let subIndex = 0; subIndex < numSubItems; subIndex++) {
+                        const item = cause.items[subIndex];
+                        
+                        const t = (subIndex + 1) / (numSubItems + 1);
+                        const subX = xPos + (boneEndX - xPos) * t;
+                        const subY = centerY + (boneEndY - centerY) * t;
+                        
+                        const boneAngleRad = Math.atan2(boneEndY - centerY, boneEndX - xPos);
+                        // For bottom bones, flip the perpendicular direction
+                        const perpAngle = boneAngleRad + (isTop ? Math.PI / 2 : -Math.PI / 2);
+                        const subBoneLength = width * 0.04;
+                        
+                        const subBoneEndX = subX + Math.cos(perpAngle) * subBoneLength;
+                        const subBoneEndY = subY + Math.sin(perpAngle) * subBoneLength;
+                        
+                        svg += `<line x1="${subX}" y1="${subY}" x2="${subBoneEndX}" y2="${subBoneEndY}" stroke="${color}" stroke-width="${width/667}" opacity="0.6"/>`;
+                        svg += `<circle cx="${subBoneEndX}" cy="${subBoneEndY}" r="${width*0.005}" fill="${color}" opacity="0.8"/>`;
+                        
+                        const subFontSize = Math.max(9, width / 91);
+                        const textOffset = width * 0.01;
+                        svg += `<text x="${subBoneEndX + textOffset}" y="${subBoneEndY + subFontSize*0.3}" font-size="${subFontSize}" fill="#555" text-anchor="start">${escapeHtml(item)}</text>`;
+                    }
+                }
+            });
+            
+            svg += '</svg>';
+            return svg;
+        }
+
+        function addCause(defaultName = '') {
+            causeCounter++;
+            const container = document.getElementById('causes-container');
+            
+            const causeDiv = document.createElement('div');
+            causeDiv.className = 'cause-item';
+            causeDiv.id = `cause-${causeCounter}`;
+            
+            causeDiv.innerHTML = `
+                <div class="cause-header">
+                    <input type="text" placeholder="Cause name (e.g., Management)" value="${defaultName}" class="cause-name">
+                    <button class="remove-cause-btn" onclick="removeCause('cause-${causeCounter}')">✕</button>
+                </div>
+                <div class="sub-items" id="sub-items-${causeCounter}">
+                    <div class="sub-item">
+                        <input type="text" placeholder="Sub-item (e.g., Option 01)" class="sub-item-input">
+                        <button class="remove-sub-btn" onclick="this.parentElement.remove()">✕</button>
+                    </div>
+                </div>
+                <button class="add-sub-btn" onclick="addSubItem('sub-items-${causeCounter}')">+ Add Sub-item</button>
+            `;
+            
+            container.appendChild(causeDiv);
+        }
+
+        function removeCause(causeId) {
+            const cause = document.getElementById(causeId);
+            cause.style.transition = 'all 0.3s';
+            cause.style.opacity = '0';
+            cause.style.transform = 'translateX(-20px)';
+            setTimeout(() => cause.remove(), 300);
+        }
+
+        function addSubItem(containerId) {
+            const container = document.getElementById(containerId);
+            const subItem = document.createElement('div');
+            subItem.className = 'sub-item';
+            subItem.innerHTML = `
+                <input type="text" placeholder="Sub-item" class="sub-item-input">
+                <button class="remove-sub-btn" onclick="this.parentElement.remove()">✕</button>
+            `;
+            container.appendChild(subItem);
+        }
+
+        function generateDiagram() {
+            const problem = document.getElementById('problem-input').value || 'Problem';
+            const causes = collectCauses();
+
+            if (causes.length === 0) {
+                alert('Please add at least one cause category!');
+                return;
+            }
+
+            drawFishbone(problem, causes);
+        }
+
+        function drawFishbone(problem, causes) {
+            const width = 1000;
+            const height = 600;
+            const centerY = height / 2;
+            const spineStartX = 100;
+            const spineEndX = width - 150;
+            const headRadius = 60;
+            
+            const palette = colorPalettes[selectedPalette];
+            
+            let svg = `<svg id="fishbone-svg" width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
+            
+            // Background
+            svg += `<rect width="${width}" height="${height}" fill="#fafbfc"/>`;
+            
+            // Draw spine (main horizontal line)
+            svg += `<line x1="${spineStartX}" y1="${centerY}" x2="${spineEndX}" y2="${centerY}" stroke="${palette.spine}" stroke-width="3"/>`;
+            
+            // Draw arrow head
+            svg += `<polygon points="${spineEndX},${centerY} ${spineEndX-15},${centerY-8} ${spineEndX-15},${centerY+8}" fill="${palette.spine}"/>`;
+            
+            // Draw problem box (fish head)
+            const headX = spineEndX + 20;
+            svg += `<ellipse cx="${headX + headRadius}" cy="${centerY}" rx="${headRadius + 20}" ry="${headRadius}" fill="${palette.head}" opacity="0.8"/>`;
+            svg += `<circle cx="${headX + headRadius + 30}" cy="${centerY - 15}" r="12" fill="white"/>`;
+            
+            // Problem text
+            const problemLines = wrapText(problem, 18);
+            problemLines.forEach((line, i) => {
+                svg += `<text x="${headX + headRadius}" y="${centerY + (i - problemLines.length/2 + 0.5) * 16}" text-anchor="middle" font-size="14" font-weight="bold" fill="white">${escapeHtml(line)}</text>`;
+            });
+            
+            // Calculate positions for causes
+            const totalCauses = causes.length;
+            const topCauses = Math.ceil(totalCauses / 2);
+            const bottomCauses = Math.floor(totalCauses / 2);
+            
+            const spineLength = spineEndX - spineStartX;
+            const segmentLength = spineLength / Math.max(topCauses, bottomCauses);
+            
+            let topIndex = 0;
+            let bottomIndex = 0;
+            
+            causes.forEach((cause, index) => {
+                const isTop = index % 2 === 0;
+                let xPos;
+                
+                if (isTop) {
+                    xPos = spineStartX + (topIndex + 0.5) * segmentLength;
+                    topIndex++;
+                } else {
+                    xPos = spineStartX + (bottomIndex + 0.5) * segmentLength;
+                    bottomIndex++;
+                }
+                
+                const yPos = isTop ? centerY - 120 : centerY + 120;
+                const boneAngle = isTop ? -45 : 45;
+                
+                const color = palette.colors[index % palette.colors.length];
+                
+                // Calculate bone end point
+                const boneEndX = xPos + (isTop ? -60 : -60);
+                const boneEndY = yPos;
+                
+                // Draw main bone
+                svg += `<line x1="${xPos}" y1="${centerY}" x2="${boneEndX}" y2="${boneEndY}" stroke="${color}" stroke-width="3"/>`;
+                
+                // Draw cause circle
+                svg += `<circle cx="${boneEndX}" cy="${boneEndY}" r="25" fill="${color}" opacity="0.3" stroke="${color}" stroke-width="2"/>`;
+                svg += `<circle cx="${boneEndX}" cy="${boneEndY}" r="8" fill="${color}"/>`;
+                
+                // Cause label
+                const causeLines = wrapText(cause.name, 12);
+                causeLines.forEach((line, i) => {
+                    svg += `<text x="${boneEndX}" y="${boneEndY + (isTop ? -35 : 45) + i * 14}" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">${escapeHtml(line)}</text>`;
+                });
+                
+                // Draw sub-items along the bone
+                const numSubItems = cause.items.length;
+                if (numSubItems > 0) {
+                    // Calculate positions along the main bone
+                    for (let subIndex = 0; subIndex < numSubItems; subIndex++) {
+                        const item = cause.items[subIndex];
+                        
+                        // Position along the bone (from spine to end)
+                        const t = (subIndex + 1) / (numSubItems + 1);
+                        const subX = xPos + (boneEndX - xPos) * t;
+                        const subY = centerY + (boneEndY - centerY) * t;
+                        
+                        // Calculate perpendicular offset for sub-bone
+                        const boneAngleRad = Math.atan2(boneEndY - centerY, boneEndX - xPos);
+                        // For bottom bones, flip the perpendicular direction
+                        const perpAngle = boneAngleRad + (isTop ? Math.PI / 2 : -Math.PI / 2);
+                        const subBoneLength = 40;
+                        
+                        // Sub-bone extends perpendicular to main bone
+                        const subBoneEndX = subX + Math.cos(perpAngle) * subBoneLength;
+                        const subBoneEndY = subY + Math.sin(perpAngle) * subBoneLength;
+                        
+                        // Draw sub-bone
+                        svg += `<line x1="${subX}" y1="${subY}" x2="${subBoneEndX}" y2="${subBoneEndY}" stroke="${color}" stroke-width="1.5" opacity="0.6"/>`;
+                        
+                        // Sub-item circle
+                        svg += `<circle cx="${subBoneEndX}" cy="${subBoneEndY}" r="5" fill="${color}" opacity="0.8"/>`;
+                        
+                        // Sub-item text - position based on which side
+                        const textOffset = 10;
+                        const textX = subBoneEndX + textOffset;
+                        const textY = subBoneEndY;
+                        const textAnchor = "start";
+                        
+                        svg += `<text x="${textX}" y="${textY + 4}" font-size="11" fill="#555" text-anchor="${textAnchor}">${escapeHtml(item)}</text>`;
+                    }
+                }
+            });
+            
+            svg += '</svg>';
+            
+            document.getElementById('diagram-container').innerHTML = svg;
+        }
+
+        function wrapText(text, maxLength) {
+            const words = text.split(' ');
+            const lines = [];
+            let currentLine = '';
+            
+            words.forEach(word => {
+                if ((currentLine + word).length <= maxLength) {
+                    currentLine += (currentLine ? ' ' : '') + word;
+                } else {
+                    if (currentLine) lines.push(currentLine);
+                    currentLine = word;
+                }
+            });
+            if (currentLine) lines.push(currentLine);
+            
+            return lines;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
