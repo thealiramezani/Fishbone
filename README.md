@@ -21,23 +21,10 @@ Built as a single-file HTML app — easy to use, easy to deploy with GitHub Page
 
 ---
 
-## 🚀 Live Demo (GitHub Pages)
+## 🚀 Link
 
-After enabling GitHub Pages for this repo, your site will be available at:
 
 https://thealiramezani.github.io/Fishbone/
-
----
-
-## 📦 Installation / Usage
-
-### Option 1 — Run locally
-
-1. Download or clone this repository
-2. Open `index.html` in your browser
-3. Start building your fishbone diagram
-
-No dependencies. No build step required.
 
 ---
 
