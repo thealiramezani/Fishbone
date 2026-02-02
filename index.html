@@ -674,7 +674,7 @@
 
             img.onload = function() {
                 ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(img, 0, 0);
                 
                 canvas.toBlob(function(blob) {
@@ -826,7 +826,7 @@
             let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
             
             // Background
-            svg += `<rect width="${width}" height="${height}" fill="#fafbfc"/>`;
+            svg += `<rect width="${width}" height="${height}" fill="none"/>`;
             
             // Draw spine (main horizontal line)
             svg += `<line x1="${spineStartX}" y1="${centerY}" x2="${spineEndX}" y2="${centerY}" stroke="${palette.spine}" stroke-width="${width/333}"/>`;
@@ -1008,7 +1008,7 @@
                             style="width:100%; height:auto; display:block;">`;
 
             // Background
-            svg += `<rect width="${width}" height="${height}" fill="#fafbfc"/>`;
+            svg += `<rect width="${width}" height="${height}" fill="none"/>`;
 
             // Draw spine (main horizontal line)
             svg += `<line x1="${spineStartX}" y1="${centerY}" x2="${spineEndX}" y2="${centerY}" stroke="${palette.spine}" stroke-width="3"/>`;
