@@ -28,18 +28,6 @@ https://thealiramezani.github.io/Fishbone/
 
 ---
 
-### Option 2 — Deploy with GitHub Pages
-
-1. Push repo to GitHub
-2. Go to **Repo → Settings → Pages**
-3. Under **Build and deployment**
-4. Source → Deploy from branch
-5. Branch → `main` and `/root`
-6. Save
-7. Open the provided Pages URL
-
----
-
 ## 🛠 How To Use
 
 1. Enter the **Problem / Effect**
