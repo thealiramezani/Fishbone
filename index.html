@@ -837,6 +837,7 @@
             
             // Draw problem box (fish head)
             const headX = spineEndX + width * 0.02;
+            svg += `<ellipse cx="${headX + headRadius}" cy="${centerY}" rx="${headRadius + width*0.02}" ry="${headRadius}" fill="${palette.head}" opacity="0.8"/>`;
             
             // Problem text
             const fontSize = Math.max(12, width / 71);
@@ -1018,7 +1019,6 @@
             // Draw problem box (fish head)
             const headX = spineEndX + 20;
             svg += `<ellipse cx="${headX + headRadius}" cy="${centerY}" rx="${headRadius + 20}" ry="${headRadius}" fill="${palette.head}" opacity="0.8"/>`;
-            svg += `<circle cx="${headX + headRadius + 30}" cy="${centerY - 15}" r="12" fill="white"/>`;
 
             // Problem text
             const problemLines = wrapText(problem, 18);
